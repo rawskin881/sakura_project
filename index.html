@@ -494,7 +494,50 @@ let currentGrammarIdx = 0;
 let currentFlashcardCat = Object.keys(APP_DATA.vocabulary)[0];
 let flashcardIdx = 0;
 let flashcardFlipped = false;
+// GANTI dari:
+// let xp = 0, level = 1, stats = {words:0, quiz:0, streak:0};
 
+// MENJADI:
+async function initApp() {
+  await db.init();
+  await state.load();
+  
+  // Subscribe ke perubahan XP untuk update UI
+  state.subscribe('user.xp', (xp) => {
+    document.getElementById('xp-display').textContent = `${xp} XP`;
+    document.getElementById('xp-bar-fill').style.width = `${xp % 100}%`;
+  });
+  
+  state.subscribe('user.level', (level) => {
+    document.getElementById('level-display').textContent = `Lv.${level}`;
+  });
+  
+  state.subscribe('user.streak', (streak) => {
+    document.getElementById('stat-streak').textContent = streak;
+  });
+  
+  // Render initial UI
+  updateStats();
+  // ... render lainnya
+}
+
+// Refactor addXP
+async function addXP(amount) {
+  const current = state.get('user.xp');
+  const newXP = current + amount;
+  const newLevel = Math.floor(newXP / 100) + 1;
+  
+  await state.set('user.xp', newXP);
+  if (newLevel !== state.get('user.level')) {
+    await state.set('user.level', newLevel);
+    showToast(`Level Up! Lv.${newLevel}`, 'gold');
+  }
+  
+  const todayXP = state.get('user.todayXP') + amount;
+  await state.set('user.todayXP', todayXP);
+  
+  if (amount > 0) showToast(`+${amount} XP`, 'gold');
+}
 let xp = 0, level = 1, stats = {words:0, quiz:0, streak:0};
 let quizQuestions = [], quizIndex = 0, quizScore = 0, quizAnswered = false;
 let gameTiles = [], gameSelected = null, gameMatches = 0, gameTimer = 0, gameInterval = null;
