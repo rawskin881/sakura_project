@@ -1,0 +1,940 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sakura - Asisten Pembelajaran Bahasa Jepang v2</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;400;500;700;900&family=Quicksand:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+<style>
+:root{--bg:#0f0f1a;--bg2:#161628;--card:#1e1e36;--card2:#252545;--accent:#e63946;--gold:#ffd166;--green:#06d6a0;--text:#e8e6f0;--muted:#6c6b8a;--border:#2a2a4a;--sakura:#ffb7c5}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Quicksand',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;overflow-x:hidden}
+body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellipse at 20% 0%,rgba(230,57,70,.07) 0%,transparent 50%),radial-gradient(ellipse at 80% 100%,rgba(255,183,197,.05) 0%,transparent 50%);pointer-events:none;z-index:0}
+::-webkit-scrollbar{width:5px}::-webkit-scrollbar-track{background:var(--bg2)}::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px}::-webkit-scrollbar-thumb:hover{background:var(--muted)}
+.sakura-petal{position:fixed;pointer-events:none;z-index:0;opacity:0;animation:petalFall linear infinite}
+@keyframes petalFall{0%{transform:translateY(-5vh) rotate(0deg) translateX(0);opacity:0}8%{opacity:.6}85%{opacity:.4}100%{transform:translateY(105vh) rotate(540deg) translateX(80px);opacity:0}}
+.nav-btn{position:relative;padding:10px 14px;border-radius:12px;transition:all .3s;cursor:pointer;border:1px solid transparent;background:transparent;color:var(--muted);font-family:'Quicksand',sans-serif;font-weight:600;font-size:12px;white-space:nowrap}
+.nav-btn:hover{color:var(--text);background:var(--card)}
+.nav-btn.active{color:var(--sakura);background:rgba(255,183,197,.1);border-color:rgba(255,183,197,.2)}
+.nav-btn i{margin-right:5px}
+.chat-msg{max-width:80%;padding:12px 16px;border-radius:16px;line-height:1.6;font-size:14px;animation:msgIn .3s ease;white-space:pre-line}
+@keyframes msgIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+.chat-bot{background:var(--card);border:1px solid var(--border);border-bottom-left-radius:4px;align-self:flex-start}
+.chat-user{background:linear-gradient(135deg,var(--accent),#c1121f);color:#fff;border-bottom-right-radius:4px;align-self:flex-end}
+.quick-btn{padding:6px 14px;border-radius:20px;border:1px solid var(--border);background:var(--card);color:var(--text);font-size:12px;cursor:pointer;transition:all .2s;font-family:'Quicksand',sans-serif}
+.quick-btn:hover{border-color:var(--sakura);color:var(--sakura);background:rgba(255,183,197,.08)}
+.kana-card{width:82px;height:100px;border-radius:14px;border:1px solid var(--border);background:var(--card);display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;transition:all .25s;gap:2px}
+.kana-card:hover{border-color:var(--sakura);transform:translateY(-3px);box-shadow:0 8px 24px rgba(255,183,197,.1)}
+.kana-card .kana{font-family:'Noto Sans JP',sans-serif;font-size:26px;font-weight:700;color:var(--text)}
+.kana-card .romaji{font-size:11px;color:var(--muted);font-weight:500}
+.kana-tab{padding:7px 16px;border-radius:10px;border:1px solid var(--border);background:transparent;color:var(--muted);cursor:pointer;transition:all .2s;font-family:'Quicksand',sans-serif;font-weight:600;font-size:12px}
+.kana-tab.active{background:var(--accent);color:#fff;border-color:var(--accent)}
+.kana-tab:hover:not(.active){border-color:var(--muted);color:var(--text)}
+.quiz-option{padding:14px 20px;border-radius:12px;border:1px solid var(--border);background:var(--card);cursor:pointer;transition:all .25s;font-size:15px;text-align:left;width:100%;font-family:'Quicksand',sans-serif;color:var(--text)}
+.quiz-option:hover:not(.disabled){border-color:var(--sakura);background:var(--card2)}
+.quiz-option.correct{border-color:var(--green)!important;background:rgba(6,214,160,.12)!important;color:var(--green)!important}
+.quiz-option.wrong{border-color:var(--accent)!important;background:rgba(230,57,70,.12)!important;color:var(--accent)!important}
+.quiz-option.disabled{pointer-events:none;opacity:.6}
+.vocab-card{border-radius:14px;border:1px solid var(--border);background:var(--card);padding:14px;transition:all .25s;cursor:default}
+.vocab-card:hover{border-color:var(--gold);transform:translateY(-2px)}
+.phrase-card{border-radius:14px;border:1px solid var(--border);background:var(--card);padding:16px;transition:all .25s}
+.phrase-card:hover{border-color:var(--gold)}
+.grammar-card{border-radius:14px;border:1px solid var(--border);background:var(--card);padding:20px;transition:all .25s}
+.grammar-card:hover{border-color:var(--green)}
+.speak-btn{width:32px;height:32px;border-radius:50%;border:1px solid var(--border);background:var(--card);color:var(--sakura);cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .2s;flex-shrink:0}
+.speak-btn:hover{background:var(--accent);color:#fff;border-color:var(--accent)}
+.speak-btn.playing{animation:pulse .8s ease infinite}
+@keyframes pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.12)}}
+.input-wrap{position:relative;flex:1}
+.input-wrap input{width:100%;padding:14px 50px 14px 18px;border-radius:14px;border:1px solid var(--border);background:var(--card);color:var(--text);font-family:'Quicksand',sans-serif;font-size:14px;outline:none;transition:border-color .2s}
+.input-wrap input:focus{border-color:var(--sakura)}
+.input-wrap input::placeholder{color:var(--muted)}
+.send-btn{position:absolute;right:6px;top:50%;transform:translateY(-50%);width:38px;height:38px;border-radius:10px;border:none;background:var(--accent);color:#fff;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .2s}
+.send-btn:hover{background:#c1121f;transform:translateY(-50%) scale(1.05)}
+.section-panel{display:none;animation:fadeIn .3s ease}.section-panel.active{display:block}
+@keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+.greeting-overlay{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;background:rgba(15,15,26,.85);border-radius:20px;z-index:5;transition:opacity .5s;backdrop-filter:blur(4px)}
+.greeting-overlay.hidden{opacity:0;pointer-events:none}
+.xp-bar{height:6px;border-radius:3px;background:var(--border);overflow:hidden}.xp-bar .fill{height:100%;border-radius:3px;background:linear-gradient(90deg,var(--gold),#ffb347);transition:width .5s ease}
+.toast{position:fixed;top:24px;right:24px;padding:14px 22px;border-radius:12px;font-size:13px;font-weight:600;z-index:999;animation:toastIn .3s ease,toastOut .3s ease 2.5s forwards;pointer-events:none}
+@keyframes toastIn{from{opacity:0;transform:translateX(40px)}to{opacity:1;transform:translateX(0)}}
+@keyframes toastOut{to{opacity:0;transform:translateX(40px)}}
+
+/* Flashcard */
+.flashcard-container{perspective:1000px;width:100%;max-width:400px;height:240px;margin:0 auto;cursor:pointer}
+.flashcard-inner{position:relative;width:100%;height:100%;transition:transform .6s;transform-style:preserve-3d}
+.flashcard-inner.flipped{transform:rotateY(180deg)}
+.flashcard-front,.flashcard-back{position:absolute;width:100%;height:100%;backface-visibility:hidden;border-radius:20px;border:1px solid var(--border);display:flex;flex-direction:column;align-items:center;justify-content:center;padding:20px}
+.flashcard-front{background:var(--card)}
+.flashcard-back{background:var(--card2);transform:rotateY(180deg)}
+
+/* Mini Game */
+.game-tile{width:100%;aspect-ratio:1;border-radius:12px;border:2px solid var(--border);background:var(--card);display:flex;align-items:center;justify-content:center;cursor:pointer;transition:all .2s;font-family:'Noto Sans JP',sans-serif;font-size:22px;font-weight:700}
+.game-tile:hover{border-color:var(--sakura);transform:scale(1.05)}
+.game-tile.matched{border-color:var(--green)!important;background:rgba(6,214,160,.1)!important;pointer-events:none;opacity:.6}
+.game-tile.wrong-match{border-color:var(--accent)!important;background:rgba(230,57,70,.1)!important}
+.game-romaji-tile{font-family:'Quicksand',sans-serif!important;font-size:16px!important;font-weight:600!important;color:var(--gold)}
+
+@media(max-width:900px){.main-layout{flex-direction:column!important}.char-panel{max-height:300px;width:100%!important}.content-panel{width:100%!important}}
+@media(max-width:640px){.kana-card{width:68px;height:85px}.kana-card .kana{font-size:20px}.nav-btn{padding:8px 10px;font-size:11px}.nav-btn span{display:none}.nav-btn i{margin-right:0}.game-tile{font-size:18px}}
+</style>
+</head>
+<body>
+<div id="petals-container"></div>
+
+<header class="relative z-10 border-b border-[var(--border)] bg-[var(--bg2)]" style="backdrop-filter:blur(10px)">
+  <div class="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between">
+    <div class="flex items-center gap-3">
+      <div class="w-9 h-9 rounded-full bg-gradient-to-br from-[var(--sakura)] to-[var(--accent)] flex items-center justify-center text-white font-bold text-sm">S</div>
+      <div>
+        <h1 class="text-base font-bold tracking-wide">Sakura <span class="text-[var(--sakura)] font-normal text-xs ml-1">さくら</span></h1>
+        <p class="text-[10px] text-[var(--muted)] -mt-0.5">Asisten Pembelajaran Bahasa Jepang v2</p>
+      </div>
+    </div>
+    <div class="flex items-center gap-4">
+      <div class="flex items-center gap-2">
+        <i class="fa-solid fa-star text-[var(--gold)] text-xs"></i>
+        <span class="text-sm font-bold" id="xp-display">0 XP</span>
+        <div class="xp-bar w-20 hidden sm:block"><div class="fill" id="xp-bar-fill" style="width:0%"></div></div>
+        <span class="text-[10px] text-[var(--muted)]" id="level-display">Lv.1</span>
+      </div>
+    </div>
+  </div>
+</header>
+
+<nav class="relative z-10 border-b border-[var(--border)] bg-[var(--bg2)] overflow-x-auto">
+  <div class="max-w-7xl mx-auto px-4 py-2 flex gap-1.5">
+    <button class="nav-btn active" data-tab="chat" onclick="switchTab('chat')"><i class="fa-solid fa-comments"></i><span>Chat</span></button>
+    <button class="nav-btn" data-tab="kana" onclick="switchTab('kana')"><i class="fa-solid fa-language"></i><span>Kana</span></button>
+    <button class="nav-btn" data-tab="vocab" onclick="switchTab('vocab')"><i class="fa-solid fa-book"></i><span>Kosakata</span></button>
+    <button class="nav-btn" data-tab="grammar" onclick="switchTab('grammar')"><i class="fa-solid fa-spell-check"></i><span>Tata Bahasa</span></button>
+    <button class="nav-btn" data-tab="phrases" onclick="switchTab('phrases')"><i class="fa-solid fa-quote-left"></i><span>Frasa</span></button>
+    <button class="nav-btn" data-tab="flashcard" onclick="switchTab('flashcard')"><i class="fa-solid fa-clone"></i><span>Flashcard</span></button>
+    <button class="nav-btn" data-tab="quiz" onclick="switchTab('quiz')"><i class="fa-solid fa-brain"></i><span>Kuis</span></button>
+    <button class="nav-btn" data-tab="game" onclick="switchTab('game')"><i class="fa-solid fa-gamepad"></i><span>Game</span></button>
+  </div>
+</nav>
+
+<main class="relative z-10 max-w-7xl mx-auto p-4">
+  <div class="main-layout flex gap-4" style="min-height:calc(100vh - 130px)">
+    
+    <!-- Panel Karakter -->
+    <div class="char-panel flex-shrink-0" style="width:280px">
+      <div class="rounded-2xl border border-[var(--border)] bg-[var(--card)] p-3 relative overflow-hidden" style="min-height:380px">
+        <div class="absolute inset-0 opacity-20" style="background:radial-gradient(circle at 50% 30%,rgba(255,183,197,.4),transparent 60%)"></div>
+        <canvas id="char-canvas" width="520" height="700" class="w-full relative z-1" style="image-rendering:auto"></canvas>
+        <div class="relative z-2 text-center -mt-1">
+          <p class="text-sm font-bold text-[var(--sakura)]">Sakura</p>
+          <p class="text-[10px] text-[var(--muted)]" id="expression-label">Senang</p>
+        </div>
+        <div class="relative z-2 mt-3 grid grid-cols-3 gap-1.5 text-center">
+          <div class="rounded-lg bg-[var(--bg2)] p-1.5">
+            <p class="text-base font-bold text-[var(--gold)]" id="stat-words">0</p>
+            <p class="text-[8px] text-[var(--muted)]">Kata</p>
+          </div>
+          <div class="rounded-lg bg-[var(--bg2)] p-1.5">
+            <p class="text-base font-bold text-[var(--green)]" id="stat-quiz">0</p>
+            <p class="text-[8px] text-[var(--muted)]">Kuis</p>
+          </div>
+          <div class="rounded-lg bg-[var(--bg2)] p-1.5">
+            <p class="text-base font-bold text-[var(--sakura)]" id="stat-streak">0</p>
+            <p class="text-[8px] text-[var(--muted)]">Hari</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Panel Konten -->
+    <div class="content-panel flex-1 min-w-0">
+      
+      <!-- CHAT -->
+      <div class="section-panel active" id="panel-chat">
+        <div class="rounded-2xl border border-[var(--border)] bg-[var(--card)] overflow-hidden flex flex-col" style="height:calc(100vh - 160px)">
+          <div class="flex-1 overflow-y-auto p-5 flex flex-col gap-3" id="chat-messages">
+            <div class="greeting-overlay" id="greeting-overlay">
+              <div class="text-center px-6">
+                <p class="text-2xl font-bold mb-2" style="font-family:'Noto Sans JP'">こんにちは！</p>
+                <p class="text-sm text-[var(--muted)] mb-5 leading-relaxed">Hai! Aku Sakura. Mau belajar apa hari ini?<br>Ketik pertanyaan atau pilih topik di bawah!</p>
+                <div class="flex flex-wrap justify-center gap-2" id="greeting-quick-btns"></div>
+              </div>
+            </div>
+          </div>
+          <div class="px-5 py-2 flex gap-2 overflow-x-auto border-t border-[var(--border)]" id="quick-actions" style="display:none"></div>
+          <div class="p-4 border-t border-[var(--border)] flex gap-3 items-center">
+            <div class="input-wrap">
+              <input type="text" id="chat-input" placeholder="Tanya apa saja tentang bahasa Jepang..." autocomplete="off" onkeydown="if(event.key==='Enter')sendMessage()">
+              <button class="send-btn" onclick="sendMessage()"><i class="fa-solid fa-paper-plane text-sm"></i></button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- KANA -->
+      <div class="section-panel" id="panel-kana">
+        <div class="rounded-2xl border border-[var(--border)] bg-[var(--card)] p-5">
+          <h2 class="text-lg font-bold mb-1">Hiragana & Katakana</h2>
+          <p class="text-xs text-[var(--muted)] mb-4">Klik karakter untuk mendengar pengucapannya</p>
+          <div class="flex gap-2 mb-5" id="kana-tabs"></div>
+          <div id="kana-grid" class="flex flex-wrap gap-2 justify-center"></div>
+        </div>
+      </div>
+
+      <!-- KOSAKATA -->
+      <div class="section-panel" id="panel-vocab">
+        <div class="rounded-2xl border border-[var(--border)] bg-[var(--card)] p-5">
+          <div class="flex items-center justify-between mb-4 flex-wrap gap-2">
+            <div>
+              <h2 class="text-lg font-bold mb-0.5">Kosakata</h2>
+              <p class="text-xs text-[var(--muted)]" id="vocab-count"></p>
+            </div>
+            <div class="flex gap-2 flex-wrap" id="vocab-categories"></div>
+          </div>
+          <div id="vocab-grid" class="grid grid-cols-1 sm:grid-cols-2 gap-3"></div>
+        </div>
+      </div>
+
+      <!-- TATA BAHASA -->
+      <div class="section-panel" id="panel-grammar">
+        <div class="rounded-2xl border border-[var(--border)] bg-[var(--card)] p-5">
+          <h2 class="text-lg font-bold mb-1">Tata Bahasa Dasar</h2>
+          <p class="text-xs text-[var(--muted)] mb-4">Pola kalimat dan penjelasan tata bahasa</p>
+          <div id="grammar-grid" class="flex flex-col gap-4"></div>
+        </div>
+      </div>
+
+      <!-- FRASA -->
+      <div class="section-panel" id="panel-phrases">
+        <div class="rounded-2xl border border-[var(--border)] bg-[var(--card)] p-5">
+          <h2 class="text-lg font-bold mb-1">Frasa Sehari-hari</h2>
+          <p class="text-xs text-[var(--muted)] mb-4">Frasa berguna untuk percakapan</p>
+          <div id="phrases-grid" class="flex flex-col gap-3"></div>
+        </div>
+      </div>
+
+      <!-- FLASHCARD -->
+      <div class="section-panel" id="panel-flashcard">
+        <div class="rounded-2xl border border-[var(--border)] bg-[var(--card)] p-5 text-center">
+          <h2 class="text-lg font-bold mb-1">Flashcard</h2>
+          <p class="text-xs text-[var(--muted)] mb-4">Klik kartu untuk membalik. Gunakan tombol untuk navigasi.</p>
+          <div class="flex gap-2 mb-4 justify-center flex-wrap" id="flashcard-categories"></div>
+          <div class="flashcard-container" id="flashcard-box" onclick="flipCard()">
+            <div class="flashcard-inner" id="flashcard-inner">
+              <div class="flashcard-front" id="flashcard-front"></div>
+              <div class="flashcard-back" id="flashcard-back"></div>
+            </div>
+          </div>
+          <div class="flex items-center justify-center gap-4 mt-5">
+            <button class="w-10 h-10 rounded-full border border-[var(--border)] bg-[var(--card)] text-[var(--muted)] cursor-pointer hover:text-[var(--text)] hover:border-[var(--sakura)] transition" onclick="prevCard()"><i class="fa-solid fa-chevron-left"></i></button>
+            <span class="text-sm text-[var(--muted)]" id="flashcard-counter">0 / 0</span>
+            <button class="w-10 h-10 rounded-full border border-[var(--border)] bg-[var(--card)] text-[var(--muted)] cursor-pointer hover:text-[var(--text)] hover:border-[var(--sakura)] transition" onclick="nextCard()"><i class="fa-solid fa-chevron-right"></i></button>
+          </div>
+          <div class="flex justify-center gap-3 mt-3">
+            <button class="speak-btn" id="fc-speak-front" onclick="event.stopPropagation(); speakFC('front')"><i class="fa-solid fa-volume-high text-xs"></i></button>
+            <button class="speak-btn" id="fc-speak-back" onclick="event.stopPropagation(); speakFC('back')"><i class="fa-solid fa-volume-high text-xs"></i></button>
+          </div>
+        </div>
+      </div>
+
+      <!-- KUIS -->
+      <div class="section-panel" id="panel-quiz">
+        <div class="rounded-2xl border border-[var(--border)] bg-[var(--card)] p-5">
+          <div class="flex items-center justify-between mb-5 flex-wrap gap-2">
+            <div>
+              <h2 class="text-lg font-bold mb-0.5">Kuis</h2>
+              <p class="text-xs text-[var(--muted)]">Uji pemahamanmu</p>
+            </div>
+            <div class="flex items-center gap-3">
+              <span class="text-sm font-bold text-[var(--green)]" id="quiz-score">Skor: 0</span>
+              <button class="px-4 py-2 rounded-lg bg-[var(--accent)] text-white text-sm font-bold cursor-pointer border-none transition hover:bg-[#c1121f]" onclick="startQuiz()">Mulai Kuis</button>
+            </div>
+          </div>
+          <div id="quiz-content">
+            <div class="text-center py-16 text-[var(--muted)]">
+              <i class="fa-solid fa-brain text-4xl mb-4 block opacity-30"></i>
+              <p class="text-sm">Tekan "Mulai Kuis" untuk memulai</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- MINI GAME -->
+      <div class="section-panel" id="panel-game">
+        <div class="rounded-2xl border border-[var(--border)] bg-[var(--card)] p-5">
+          <div class="flex items-center justify-between mb-5 flex-wrap gap-2">
+            <div>
+              <h2 class="text-lg font-bold mb-0.5">Speed Match</h2>
+              <p class="text-xs text-[var(--muted)]">Cocokkan Kana dengan Romaji secepat mungkin!</p>
+            </div>
+            <div class="flex items-center gap-3">
+              <span class="text-sm font-bold text-[var(--gold)]" id="game-timer">Waktu: 0s</span>
+              <button class="px-4 py-2 rounded-lg bg-[var(--accent)] text-white text-sm font-bold cursor-pointer border-none transition hover:bg-[#c1121f]" onclick="startGame()">Main</button>
+            </div>
+          </div>
+          <div id="game-content" class="text-center py-16 text-[var(--muted)]">
+            <i class="fa-solid fa-gamepad text-4xl mb-4 block opacity-30"></i>
+            <p class="text-sm">Tekan "Main" untuk memulai</p>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</main>
+
+<script>
+/* ================================================================
+   [1] DATABASE MATERI (UBAH/ TAMBAH DATA DI SINI SAJA)
+   Untuk menambah materi baru, cukup tambahkan item baru ke array yang sesuai.
+   Format sudah distandarisasi.
+   ================================================================ */
+
+const APP_DATA = {
+  
+  // --- KANA ---
+  // Format: [karakter, romaji]
+  kanaSets: {
+    "Hiragana": [
+      ['あ','a'],['い','i'],['う','u'],['え','e'],['お','o'],
+      ['か','ka'],['き','ki'],['く','ku'],['け','ke'],['こ','ko'],
+      ['さ','sa'],['し','shi'],['す','su'],['せ','se'],['そ','so'],
+      ['た','ta'],['ち','chi'],['つ','tsu'],['て','te'],['と','to'],
+      ['な','na'],['に','ni'],['ぬ','nu'],['ね','ne'],['の','no'],
+      ['は','ha'],['ひ','hi'],['ふ','fu'],['へ','he'],['ほ','ho'],
+      ['ま','ma'],['み','mi'],['む','mu'],['め','me'],['も','mo'],
+      ['や','ya'],['ゆ','yu'],['よ','yo'],
+      ['ら','ra'],['り','ri'],['る','ru'],['れ','re'],['ろ','ro'],
+      ['わ','wa'],['を','wo'],['ん','n']
+    ],
+    "Katakana": [
+      ['ア','a'],['イ','i'],['ウ','u'],['エ','e'],['オ','o'],
+      ['カ','ka'],['キ','ki'],['ク','ku'],['ケ','ke'],['コ','ko'],
+      ['サ','sa'],['シ','shi'],['ス','su'],['セ','se'],['ソ','so'],
+      ['タ','ta'],['チ','chi'],['ツ','tsu'],['テ','te'],['ト','to'],
+      ['ナ','na'],['ニ','ni'],['ヌ','nu'],['ネ','ne'],['ノ','no'],
+      ['ハ','ha'],['ヒ','hi'],['フ','fu'],['ヘ','he'],['ホ','ho'],
+      ['マ','ma'],['ミ','mi'],['ム','mu'],['メ','me'],['モ','mo'],
+      ['ヤ','ya'],['ユ','yu'],['ヨ','yo'],
+      ['ラ','ra'],['リ','ri'],['ル','ru'],['レ','re'],['ロ','ro'],
+      ['ワ','wa'],['ヲ','wo'],['ン','n']
+    ],
+    // CONTOH: Cara menambah Dakuten
+    // "Hiragana Dakuten": [
+    //   ['が','ga'],['ぎ','gi'],['ぐ','gu'],['げ','ge'],['ご','go'],
+    //   ['ざ','za'],['じ','ji'],['ず','zu'],['ぜ','ze'],['ぞ','zo'],
+    //   ['だ','da'],['ぢ','di'],['づ','du'],['で','de'],['ど','do'],
+    //   ['ば','ba'],['び','bi'],['ぶ','bu'],['べ','be'],['ぼ','bo'],
+    //   ['ぱ','pa'],['ぴ','pi'],['ぷ','pu'],['ぺ','pe'],['ぽ','po']
+    // ]
+  },
+
+  // --- KOSAKATA ---
+  // Format: { jp, rom, id } dalam array per kategori
+  vocabulary: {
+    "Salam": [
+      {jp:'おはようございます',rom:'Ohayou gozaimasu',id:'Selamat pagi (formal)'},
+      {jp:'こんにちは',rom:'Konnichiwa',id:'Selamat siang'},
+      {jp:'こんばんは',rom:'Konbanwa',id:'Selamat malam'},
+      {jp:'さようなら',rom:'Sayounara',id:'Selamat tinggal'},
+      {jp:'またね',rom:'Mata ne',id:'Sampai jumpa (informal)'},
+      {jp:'おやすみなさい',rom:'Oyasuminasai',id:'Selamat tidur'},
+    ],
+    "Angka": [
+      {jp:'いち',rom:'Ichi',id:'Satu (1)'},{jp:'に',rom:'Ni',id:'Dua (2)'},
+      {jp:'さん',rom:'San',id:'Tiga (3)'},{jp:'よん',rom:'Yon',id:'Empat (4)'},
+      {jp:'ご',rom:'Go',id:'Lima (5)'},{jp:'ろく',rom:'Roku',id:'Enam (6)'},
+      {jp:'なな',rom:'Nana',id:'Tujuh (7)'},{jp:'はち',rom:'Hachi',id:'Delapan (8)'},
+      {jp:'きゅう',rom:'Kyu',id:'Sembilan (9)'},{jp:'じゅう',rom:'Juu',id:'Sepuluh (10)'},
+    ],
+    "Keluarga": [
+      {jp:'お父さん',rom:'Otousan',id:'Ayah'},{jp:'お母さん',rom:'Okaasan',id:'Ibu'},
+      {jp:'お兄さん',rom:'Oniisan',id:'Kakak laki-laki'},{jp:'お姉さん',rom:'Oneesan',id:'Kakak perempuan'},
+      {jp:'弟',rom:'Otouto',id:'Adik laki-laki'},{jp:'妹',rom:'Imouto',id:'Adik perempuan'},
+    ],
+    "Warna": [
+      {jp:'あか',rom:'Aka',id:'Merah'},{jp:'あお',rom:'Ao',id:'Biru'},
+      {jp:'しろ',rom:'Shiro',id:'Putih'},{jp:'くろ',rom:'Kuro',id:'Hitam'},
+      {jp:'みどり',rom:'Midori',id:'Hijau'},{jp:'きいろ',rom:'Kiiro',id:'Kuning'},
+    ],
+    "Makanan": [
+      {jp:'ごはん',rom:'Gohan',id:'Nasi'},{jp:'さかな',rom:'Sakana',id:'Ikan'},
+      {jp:'にく',rom:'Niku',id:'Daging'},{jp:'やさい',rom:'Yasai',id:'Sayur'},
+      {jp:'みず',rom:'Mizu',id:'Air'},{jp:'おちゃ',rom:'Ocha',id:'Teh'},
+    ],
+    // CONTOH: Cara menambah kategori baru
+    // "Transportasi": [
+    //   {jp:'電車',rom:'Densha',id:'Kereta api'},
+    //   {jp:'バス',rom:'Basu',id:'Bus'},
+    //   {jp:'飛行機',rom:'Hikouki',id:'Pesawat'},
+    // ]
+  },
+
+  // --- TATA BAHASA ---
+  // Format: { title, pattern, meaning, explain, examples: [{jp, rom, id}] }
+  grammar: [
+    {
+      title: "Kalimat Dasar (A wa B desu)",
+      pattern: "[A] は [B] です",
+      meaning: "A adalah B",
+      explain: "Partikel は (wa) menandai topik kalimat. です (desu) adalah kopula polos (sama dengan 'adalah'). Ini adalah pola kalimat paling mendasar.",
+      examples: [
+        {jp:'私は学生です。',rom:'Watashi wa gakusei desu.',id:'Saya adalah mahasiswa.'},
+        {jp:'これは本です。',rom:'Kore wa hon desu.',id:'Ini adalah buku.'},
+        {jp:'猫は動物です。',rom:'Neko wa doubutsu desu.',id:'Kucing adalah hewan.'}
+      ]
+    },
+    {
+      title: "Partikel Penunjuk Objek (o)",
+      pattern: "[Objek] を [Verb]",
+      meaning: "Melakukan sesuatu terhadap objek",
+      explain: "Partikel を (o) menandai objek langsung dari kata kerja transitive. Dibaca 'o' bukan 'wo'.",
+      examples: [
+        {jp:'ごはんを食べます。',rom:'Gohan o tabemasu.',id:'Saya makan nasi.'},
+        {jp:'本を読みます。',rom:'Hon o yomimasu.',id:'Saya membaca buku.'},
+        {jp:'音楽を聴きます。',rom:'Ongaku o kikimasu.',id:'Saya mendengarkan musik.'}
+      ]
+    },
+    {
+      title: "Kalimat Negatif",
+      pattern: "[A] は [B] じゃありません / ではありません",
+      meaning: "A bukan B",
+      explain: "じゃありません (ja arimasen) adalah bentuk negatif informal dari です. ではありません (dewa arimasen) adalah versi formalnya.",
+      examples: [
+        {jp:'私は先生じゃありません。',rom:'Watashi wa sensei ja arimasen.',id:'Saya bukan guru.'},
+        {jp:'それはペンではありません。',rom:'Sore wa pen dewa arimasen.',id:'Itu bukan pulpen.'}
+      ]
+    },
+    {
+      title: "Pertanyaan dengan 'ka'",
+      pattern: "[Kalimat] か",
+      meaning: "Menambahkan tanda tanya",
+      explain: "Partikel か (ka) di akhir kalimat mengubahnya menjadi pertanyaan. Tidak menggunakan tanda tanya (?) dalam bahasa Jepang formal, tapi di media modern sering dipakai.",
+      examples: [
+        {jp:'あなたは学生ですか。',rom:'Anata wa gakusei desu ka.',id:'Apakah Anda mahasiswa?'},
+        {jp:'それは何ですか。',rom:'Sore wa nan desu ka.',id:'Itu apa?'},
+      ]
+    },
+    {
+      title: "Partikel Lokasi (ni/de)",
+      pattern: "[Tempat] に / で [Verb]",
+      meaning: "Di/Dari tempat tertentu",
+      explain: "に (ni) untuk keberadaan/arah (ada di, pergi ke). で (de) untuk tempat terjadinya aksi (makan di, belajar di).",
+      examples: [
+        {jp:'学校にいます。',rom:'Gakkou ni imasu.',id:'(Saya) ada di sekolah.'},
+        {jp:'図書館で勉強します。',rom:'Toshokan de benkyou shimasu.',id:'Saya belajar di perpustakaan.'},
+        {jp:'家に帰ります。',rom:'Ie ni kaerimasu.',id:'Saya pulang ke rumah.'}
+      ]
+    },
+    // CONTOH: Cara menambah materi grammar baru
+    // {
+    //   title: "Kata Kerja Te-Form",
+    //   pattern: "[Verb-te] + ください",
+    //   meaning: "Mohon lakukan sesuatu",
+    //   explain: "Te-form digunakan untuk banyak hal, salah satunya meminta seseorang melakukan sesuatu dengan sopan.",
+    //   examples: [
+    //     {jp:'ここに座ってください。',rom:'Koko ni suwatte kudasai.',id:'Tolong duduk di sini.'},
+    //   ]
+    // }
+  ],
+
+  // --- FRASA ---
+  // Format: { jp, rom, id, context }
+  phrases: [
+    {jp:'はじめまして、どうぞよろしくおねがいします',rom:'Hajimemashite, douzo yoroshiku onegaishimasu',id:'Senang berkenalan, tolong bantuannya ya',context:'Perkenalan'},
+    {jp:'すみません、道を教えていただけませんか',rom:'Sumimasen, michi o oshiete itadakemasen ka',id:'Permisi, bisa tunjukkan jalan?',context:'Menanyakan arah'},
+    {jp:'これはいくらですか',rom:'Kore wa ikura desu ka',id:'Ini berapa harganya?',context:'Belanja'},
+    {jp:'トイレはどこですか',rom:'Toire wa doko desu ka',id:'Di mana toiletnya?',context:'Menanyakan lokasi'},
+    {jp:'日本語がわかりません',rom:'Nihongo ga wakarimasen',id:'Saya tidak mengerti bahasa Jepang',context:'Ketika bingung'},
+    {jp:'もう一度言ってください',rom:'Mou ichido itte kudasai',id:'Tolong ulangi sekali lagi',context:'Meminta pengulangan'},
+    {jp:'お元気ですか',rom:'Ogenki desu ka',id:'Apa kabar?',context:'Menanyakan kabar'},
+    {jp:'元気です、ありがとう',rom:'Genki desu, arigatou',id:'Baik, terima kasih',context:'Menjawab kabar'},
+    {jp:'少しだけ日本語を話せます',rom:'Sukoshi dake nihongo o hanasemasu',id:'Saya bisa berbicara sedikit Jepang',context:'Mengakui kemampuan'},
+    {jp:'美味しいです！',rom:'Oishii desu!',id:'Enak sekali!',context:'Mencicipi makanan'},
+    {jp:'お腹が空きました',rom:'Onaka ga sukaremashita',id:'Saya lapar',context:'Menyatakan lapar'},
+    {jp:'写真を撮ってもいいですか',rom:'Shashin o totte mo ii desu ka',id:'Boleh saya ambil foto?',context:'Meminta izin'},
+  ],
+
+  // --- CHAT RESPONSES ---
+  // Format: { keys: [kata kunci], response: 'jawaban', expr: 'happy|thinking|sad' }
+  chatResponses: [
+    {keys:['arigatou','ありがとう','terima kasih','thanks','makasih'],response:'ありがとうございます (arigatou gozaimasu) artinya "terima kasih" secara formal.\n\nUntuk situasi santai: ありがとう (arigatou)\nVersi sangat formal: 感謝します (kansha shimasu)',expr:'happy'},
+    {keys:['sumimasen','すみません','permisi','maaf'],response:'すみません (sumimasen) punya 3 arti: "permisi", "maaf", dan bahkan "terima kasih".\n\nUntuk "maaf" yang lebih personal: ごめんなさい (gomen nasai)\nSangat formal: 申し訳ありません (moushiwake arimasen)',expr:'thinking'},
+    {keys:['ohayou','おはよう','pagi','selamat pagi'],response:'おはようございます (ohayou gozaimasu) = "Selamat pagi" formal.\nUntuk teman dekat: おはよう (ohayou).\nDigunakan sampai sekitar jam 10 pagi.',expr:'happy'},
+    {keys:['konnichiwa','こんにちは','siang'],response:'こんにちは (konnichiwa) = "Selamat siang".\nDigunakan sekitar jam 11 siang sampai sore.\nFun fact: は di sini dibaca "wa" (bukan "ha") karena berfungsi sebagai partikel topik!',expr:'happy'},
+    {keys:['sayonara','さようなら','selamat tinggal','bye'],response:'さようなら (sayounara) = "Selamat tinggal" (cenderung permanen).\n\nUntuk "sampai jumpa" (akan bertemu lagi):\n• またね (mata ne) - santai\n• またあとで (mata ato de) - "nanti lagi"',expr:'happy'},
+    {keys:['salam','menyapa','sapa'],response:'Panduan salasan dalam bahasa Jepang:\n\n🌅 おはようございます - Selamat pagi\n☀️ こんにちは - Selamat siang\n🌙 こんばんは - Selamat malam\n😴 おやすみなさい - Selamat tidur\n👋 またね - Sampai jumpa\n👋🏻 さようなら - Selamat tinggal',expr:'happy'},
+    {keys:['kata kerja','verb','dasar','verba'],response:'Kata kerja dasar yang penting:\n\n食べる (taberu) - makan\n飲む (nomu) - minum\n行く (iku) - pergi\n来る (kuru) - datang\n見る (miru) - melihat\n聞く (kiku) - mendengar\n話す (hanasu) - berbicara\n読む (yomu) - membaca\n書く (kaku) - menulis',expr:'thinking'},
+    {keys:['angka','menghitung','nomor','number'],response:'Angka dasar Jepang:\n\n1: いち (ichi) | 2: に (ni) | 3: さん (san)\n4: よん (yon) | 5: ご (go) | 6: ろく (roku)\n7: なな (nana) | 8: はち (hachi)\n9: きゅう (kyuu) | 10: じゅう (juu)\n100: ひゃく (hyaku) | 1000: せん (sen)',expr:'thinking'},
+    {keys:['は','が','wa','ga','partikel','particle'],response:'Perbedaan は (wa) dan が (ga):\n\nは (wa) = Topik kalimat, info yang sudah diketahui.\n→ 私は学生です (Saya topiknya, seorang mahasiswa)\n\nが (ga) = Subjek kalimat, menandai info BARU.\n→ 猫がいます (Ada kucing! - info baru)\n\nTip: が sering muncul setelah kata tanya.',expr:'thinking'},
+    {keys:['nama','nama saya','watashi','私','perkenalan'],response:'Cara memperkenalkan diri:\n\n私は[name]です。\n(Watashi wa [nama] desu) = Saya [nama].\n\nVersi lengkap:\n私は[name]です。はじめまして、どうぞよろしくおねがいします。\n\nCatatan: 私 bisa dibaca "watashi" (netral), "atashi" (perempuan santai), atau "boku" (laki-laki santai).',expr:'happy'},
+    {keys:['sehari-hari','harian','daily','kalimat','contoh'],response:'Kalimat sehari-hari yang berguna:\n\nお元気ですか (Ogenki desu ka) - Apa kabar?\n元気です (Genki desu) - Baik/Saya sehat\nお腹が空きました (Onaka ga sukaremashita) - Saya lapar\n美味しいです (Oishii desu) - Enak sekali\nちょっと待ってください (Chotto matte kudasai) - Tunggu sebentar\n大丈夫です (Daijoubu desu) - Tidak apa-apa',expr:'happy'},
+    {keys:['waktu','jam','what time','jam berapa'],response:'Menanyakan waktu:\n\n今何時ですか (Ima nanji desu ka) - Jam berapa sekarang?\n\n1時: いちじ (ichiji) | 2時: にじ (niji)\n半: はん (han) = setengah\n午前: gozen = AM | 午後: gogo = PM\n\nContoh: 午後3時半です (Gogo sanji han desu) = Jam 3 sore setengah.',expr:'thinking'},
+    {keys:['suka','like','suki','好き','kirai','benci'],response:'Menyatakan suka/tidak suka:\n\n好き (suki) = suka\n大好き (daisuki) = sangat suka\n嫌い (kirai) = tidak suka/benci\n\nPola: [sesuatu] が 好きです\n• 日本が好きです (Nihon ga suki desu) - Saya suka Jepang\n• 音楽が好きです (Ongaku ga suki desu) - Saya suka musik',expr:'happy'},
+    {keys:['belajar','mempelajari','benkyou','勉強','study'],response:'Kata-kata terkait belajar:\n\n勉強する (benkyou suru) - belajar\n宿題 (shukudai) - PR\n試験 (shiken) - ujian\n学校 (gakkou) - sekolah\n先生 (sensei) - guru\n生徒 (seito) - murid\n教科書 (kyoukasho) - buku pelajaran\n辞書 (jisho) - kamus',expr:'thinking'},
+    // CONTOH: Cara menambah topik chat baru
+    // {keys:['hobi','hobby','shumi','趣味'],response:'Kata-kata tentang hobi:\n\n趣味は何ですか (Shumi wa nan desu ka) - Hobi kamu apa?\n\n私の趣味は読書です (Watashi no shumi wa dokusho desu) - Hobi saya membaca\n\n映画 (eiga) - film\n音楽 (ongaku) - musik\n料理 (ryouri) - memasak\nゲーム (geemu) - game',expr:'happy'},
+  ]
+};
+
+
+/* ================================================================
+   [2] STATE & LOGIKA APLIKASI (JANGAN DIUBAH KECUALI MEMPERBAIKI BUG)
+   ================================================================ */
+
+let currentTab = 'chat';
+let currentKanaSet = Object.keys(APP_DATA.kanaSets)[0];
+let currentVocabCat = Object.keys(APP_DATA.vocabulary)[0];
+let currentGrammarIdx = 0;
+let currentFlashcardCat = Object.keys(APP_DATA.vocabulary)[0];
+let flashcardIdx = 0;
+let flashcardFlipped = false;
+
+let xp = 0, level = 1, stats = {words:0, quiz:0, streak:0};
+let quizQuestions = [], quizIndex = 0, quizScore = 0, quizAnswered = false;
+let gameTiles = [], gameSelected = null, gameMatches = 0, gameTimer = 0, gameInterval = null;
+let chatStarted = false;
+
+// --- UTILITAS ---
+function speak(text, btn) {
+  if (!('speechSynthesis' in window)) return;
+  window.speechSynthesis.cancel();
+  const u = new SpeechSynthesisUtterance(text);
+  u.lang = 'ja-JP'; u.rate = 0.85; u.pitch = 1.15;
+  window.speechSynthesis.speak(u);
+  if(btn) { btn.classList.add('playing'); setTimeout(()=>btn.classList.remove('playing'), 1200); }
+}
+
+function addXP(a) {
+  xp += a; level = Math.floor(xp/100)+1;
+  document.getElementById('xp-display').textContent = xp+' XP';
+  document.getElementById('xp-bar-fill').style.width = (xp%100)+'%';
+  document.getElementById('level-display').textContent = 'Lv.'+level;
+  if(a>0) showToast(`+${a} XP`,'gold');
+}
+
+function updateStats() {
+  document.getElementById('stat-words').textContent = stats.words;
+  document.getElementById('stat-quiz').textContent = stats.quiz;
+  document.getElementById('stat-streak').textContent = stats.streak;
+}
+
+function showToast(msg, color) {
+  const t = document.createElement('div');
+  t.className = 'toast';
+  t.style.background = color==='gold'?'var(--gold)':color==='green'?'var(--green)':'var(--accent)';
+  t.style.color = color==='gold'?'#1a1a2e':'#fff';
+  t.textContent = msg; document.body.appendChild(t);
+  setTimeout(()=>t.remove(), 3000);
+}
+
+function shuffle(arr) { return [...arr].sort(()=>Math.random()-.5); }
+
+function setExpression(expr) {
+  currentExpression = expr;
+  const l={happy:'Senang',surprised:'Kaget',thinking:'Berpikir',sad:'Sedih'};
+  document.getElementById('expression-label').textContent = l[expr]||'Senang';
+}
+
+// --- NAVIGASI ---
+function switchTab(tab) {
+  currentTab = tab;
+  document.querySelectorAll('.nav-btn').forEach(b=>b.classList.toggle('active',b.dataset.tab===tab));
+  document.querySelectorAll('.section-panel').forEach(p=>p.classList.remove('active'));
+  document.getElementById('panel-'+tab).classList.add('active');
+  const e={chat:'happy',kana:'thinking',vocab:'happy',grammar:'thinking',phrases:'happy',flashcard:'happy',quiz:'surprised',game:'surprised'};
+  setExpression(e[tab]||'happy');
+  if(tab==='flashcard') renderFlashcard();
+}
+
+// --- KANA (OTOMATIS DARI APP_DATA) ---
+function renderKanaTabs() {
+  const c = document.getElementById('kana-tabs'); c.innerHTML = '';
+  Object.keys(APP_DATA.kanaSets).forEach((name, i) => {
+    const b = document.createElement('button');
+    b.className = `kana-tab ${i===0?'active':''}`;
+    b.textContent = name;
+    b.onclick = () => {
+      currentKanaSet = name;
+      document.querySelectorAll('#kana-tabs .kana-tab').forEach(t=>t.classList.remove('active'));
+      b.classList.add('active');
+      renderKanaGrid();
+    };
+    c.appendChild(b);
+  });
+}
+
+function renderKanaGrid() {
+  const g = document.getElementById('kana-grid'); g.innerHTML = '';
+  APP_DATA.kanaSets[currentKanaSet].forEach(([kana, rom]) => {
+    const d = document.createElement('div'); d.className = 'kana-card';
+    d.innerHTML = `<span class="kana">${kana}</span><span class="romaji">${rom}</span>`;
+    d.onclick = () => { speak(kana); addXP(1); stats.words++; updateStats(); };
+    g.appendChild(d);
+  });
+}
+
+// --- KOSAKATA (OTOMATIS DARI APP_DATA) ---
+function renderVocabCategories() {
+  const c = document.getElementById('vocab-categories'); c.innerHTML = '';
+  Object.keys(APP_DATA.vocabulary).forEach(cat => {
+    const b = document.createElement('button');
+    b.className = `kana-tab ${cat===currentVocabCat?'active':''}`;
+    b.textContent = cat;
+    b.onclick = () => {
+      currentVocabCat = cat;
+      document.querySelectorAll('#vocab-categories .kana-tab').forEach(t=>t.classList.remove('active'));
+      b.classList.add('active');
+      renderVocabGrid();
+    };
+    c.appendChild(b);
+  });
+  const total = Object.values(APP_DATA.vocabulary).flat().length;
+  document.getElementById('vocab-count').textContent = `Total ${total} kata dalam ${Object.keys(APP_DATA.vocabulary).length} kategori`;
+}
+
+function renderVocabGrid() {
+  const g = document.getElementById('vocab-grid'); g.innerHTML = '';
+  APP_DATA.vocabulary[currentVocabCat].forEach(item => {
+    const d = document.createElement('div'); d.className = 'vocab-card flex items-center gap-3';
+    d.innerHTML = `<button class="speak-btn" onclick="speak(this,'${item.jp}')"><i class="fa-solid fa-volume-high text-xs"></i></button>
+      <div class="flex-1 min-w-0"><p class="text-base font-bold" style="font-family:'Noto Sans JP'">${item.jp}</p><p class="text-xs text-[var(--muted)]">${item.rom}</p><p class="text-sm text-[var(--gold)] mt-0.5">${item.id}</p></div>`;
+    g.appendChild(d);
+  });
+}
+
+// --- TATA BAHASA (OTOMATIS DARI APP_DATA) ---
+function renderGrammar() {
+  const g = document.getElementById('grammar-grid'); g.innerHTML = '';
+  APP_DATA.grammar.forEach((item, idx) => {
+    const d = document.createElement('div'); d.className = 'grammar-card';
+    let exHtml = item.examples.map(e => 
+      `<div class="flex items-start gap-2 mt-2"><button class="speak-btn mt-0.5" onclick="speak(this,'${e.jp}')"><i class="fa-solid fa-volume-high text-xs"></i></button><div><p class="text-sm font-bold" style="font-family:'Noto Sans JP'">${e.jp}</p><p class="text-xs text-[var(--muted)]">${e.rom}</p><p class="text-xs text-[var(--gold)]">${e.id}</p></div></div>`
+    ).join('');
+    d.innerHTML = `
+      <div class="flex items-center gap-2 mb-2">
+        <span class="text-[10px] px-2 py-0.5 rounded-full bg-[var(--green)] text-[var(--bg)] font-bold">${item.pattern}</span>
+        <span class="text-xs text-[var(--muted)]">${item.meaning}</span>
+      </div>
+      <h3 class="text-base font-bold mb-1">${item.title}</h3>
+      <p class="text-xs text-[var(--muted)] leading-relaxed">${item.explain}</p>
+      <div class="mt-3 border-t border-[var(--border)] pt-3">${exHtml}</div>
+    `;
+    g.appendChild(d);
+  });
+}
+
+// --- FRASA (OTOMATIS DARI APP_DATA) ---
+function renderPhrases() {
+  const g = document.getElementById('phrases-grid'); g.innerHTML = '';
+  APP_DATA.phrases.forEach(item => {
+    const d = document.createElement('div'); d.className = 'phrase-card';
+    d.innerHTML = `<div class="flex items-start gap-3">
+      <button class="speak-btn mt-1" onclick="speak(this,'${item.jp}')"><i class="fa-solid fa-volume-high text-xs"></i></button>
+      <div class="flex-1"><span class="text-[10px] px-2 py-0.5 rounded-full bg-[var(--accent)] text-white font-bold">${item.context}</span>
+        <p class="text-base font-bold leading-relaxed mt-1.5" style="font-family:'Noto Sans JP'">${item.jp}</p>
+        <p class="text-xs text-[var(--muted)] mt-0.5">${item.rom}</p>
+        <p class="text-sm text-[var(--gold)] mt-1">${item.id}</p></div></div>`;
+    g.appendChild(d);
+  });
+}
+
+// --- FLASHCARD (OTOMATIS DARI DATA KOSAKATA) ---
+function renderFlashcardCategories() {
+  const c = document.getElementById('flashcard-categories'); c.innerHTML = '';
+  Object.keys(APP_DATA.vocabulary).forEach(cat => {
+    const b = document.createElement('button');
+    b.className = `kana-tab ${cat===currentFlashcardCat?'active':''}`;
+    b.textContent = cat;
+    b.onclick = () => { currentFlashcardCat=cat; flashcardIdx=0; flashcardFlipped=false;
+      document.querySelectorAll('#flashcard-categories .kana-tab').forEach(t=>t.classList.remove('active'));
+      b.classList.add('active'); renderFlashcard(); };
+    c.appendChild(b);
+  });
+}
+
+function renderFlashcard() {
+  const items = APP_DATA.vocabulary[currentFlashcardCat];
+  if(!items.length) return;
+  const item = items[flashcardIdx % items.length];
+  flashcardFlipped = false;
+  document.getElementById('flashcard-inner').classList.remove('flipped');
+  document.getElementById('flashcard-front').innerHTML = `<p class="text-3xl font-bold" style="font-family:'Noto Sans JP'">${item.jp}</p><p class="text-xs text-[var(--muted)] mt-2">${currentFlashcardCat}</p>`;
+  document.getElementById('flashcard-back').innerHTML = `<p class="text-lg font-bold text-[var(--gold)]">${item.id}</p><p class="text-sm text-[var(--muted)] mt-1">${item.rom}</p>`;
+  document.getElementById('flashcard-counter').textContent = `${(flashcardIdx%items.length)+1} / ${items.length}`;
+}
+
+function flipCard() { flashcardFlipped=!flashcardFlipped; document.getElementById('flashcard-inner').classList.toggle('flipped',flashcardFlipped); }
+function nextCard() { flashcardIdx++; renderFlashcard(); addXP(2); stats.words++; updateStats(); }
+function prevCard() { const items=APP_DATA.vocabulary[currentFlashcardCat]; flashcardIdx=(flashcardIdx-1+items.length)%items.length; renderFlashcard(); }
+function speakFC(side) {
+  const items = APP_DATA.vocabulary[currentFlashcardCat];
+  const item = items[flashcardIdx % items.length];
+  const btn = document.getElementById(side==='front'?'fc-speak-front':'fc-speak-back');
+  speak(item.jp, btn);
+}
+
+// --- KUIS (OTOMATIS DARI DATA KOSAKATA) ---
+function generateQuizQuestions() {
+  const allVocab = Object.values(APP_DATA.vocabulary).flat();
+  const qs = [];
+  for(let i=0;i<5;i++){
+    const item = allVocab[Math.floor(Math.random()*allVocab.length)];
+    const wrongs = shuffle(allVocab.filter(v=>v.id!==item.id)).slice(0,3).map(v=>v.id);
+    qs.push({q:`Apa arti dari "${item.jp}" (${item.rom})?`, options:shuffle([item.id,...wrongs]), answer:item.id});
+  }
+  for(let i=0;i<5;i++){
+    const item = allVocab[Math.floor(Math.random()*allVocab.length)];
+    const wrongs = shuffle(allVocab.filter(v=>v.jp!==item.jp)).slice(0,3).map(v=>v.jp);
+    qs.push({q:`Bagaimana mengatakan "${item.id}" dalam bahasa Jepang?`, options:shuffle([item.jp,...wrongs]), answer:item.jp});
+  }
+  return shuffle(qs).slice(0,8);
+}
+
+function startQuiz() {
+  quizQuestions=generateQuizQuestions(); quizIndex=0; quizScore=0; quizAnswered=false;
+  document.getElementById('quiz-score').textContent='Skor: 0';
+  setExpression('surprised'); renderQuizQ();
+}
+
+function renderQuizQ() {
+  const c = document.getElementById('quiz-content');
+  if(quizIndex>=quizQuestions.length){
+    const pct=Math.round((quizScore/quizQuestions.length)*100);
+    const msg=pct>=80?'すごい! Luar biasa!':pct>=50?'Bagus! Terus berlatih!':'Jangan menyerah! 続けて!';
+    c.innerHTML=`<div class="text-center py-12"><div class="w-24 h-24 rounded-full mx-auto mb-4 flex items-center justify-center text-3xl font-black" style="background:${pct>=80?'var(--green)':pct>=50?'var(--gold)':'var(--accent)'};color:#fff">${pct}%</div><p class="text-xl font-bold mb-2">${quizScore} dari ${quizQuestions.length} benar</p><p class="text-sm text-[var(--muted)] mb-6">${msg}</p><button class="px-6 py-2.5 rounded-lg bg-[var(--accent)] text-white font-bold cursor-pointer border-none text-sm hover:bg-[#c1121f] transition" onclick="startQuiz()">Coba Lagi</button></div>`;
+    setExpression(pct>=50?'happy':'sad'); stats.quiz++; updateStats(); addXP(quizScore*10); return;
+  }
+  const q=quizQuestions[quizIndex]; quizAnswered=false;
+  c.innerHTML=`<div class="mb-4 flex items-center justify-between"><span class="text-xs text-[var(--muted)]">Soal ${quizIndex+1}/${quizQuestions.length}</span></div><p class="text-base font-bold mb-5">${q.q}</p><div class="flex flex-col gap-2.5" id="quiz-options">${q.options.map(o=>`<button class="quiz-option" onclick="answerQuiz(this,'${o.replace(/'/g,"\\'")}')">${o}</button>`).join('')}</div>`;
+}
+
+function answerQuiz(btn, sel) {
+  if(quizAnswered) return; quizAnswered=true;
+  const q=quizQuestions[quizIndex];
+  document.querySelectorAll('#quiz-options .quiz-option').forEach(b=>b.classList.add('disabled'));
+  if(sel===q.answer){btn.classList.add('correct');quizScore++;setExpression('happy');}
+  else{btn.classList.add('wrong');document.querySelectorAll('#quiz-options .quiz-option').forEach(b=>{if(b.textContent===q.answer)b.classList.add('correct');});setExpression('sad');}
+  document.getElementById('quiz-score').textContent=`Skor: ${quizScore}`;
+  setTimeout(()=>{quizIndex++;renderQuizQ();},1200);
+}
+
+// --- MINI GAME SPEED MATCH (OTOMATIS DARI DATA KANA) ---
+function startGame() {
+  if(gameInterval) clearInterval(gameInterval);
+  gameMatches=0; gameSelected=null; gameTimer=0;
+  const allKana = APP_DATA.kanaSets[Object.keys(APP_DATA.kanaSets)[0]]; // Pakai set kana pertama
+  const picked = shuffle(allKana).slice(0,6);
+  const tiles = [];
+  picked.forEach(([k,r])=>{tiles.push({type:'kana',val:k,rom:r,id:k});tiles.push({type:'romaji',val:r,rom:r,id:r});});
+  gameTiles = shuffle(tiles);
+  renderGameGrid(); setExpression('surprised');
+  document.getElementById('game-timer').textContent='Waktu: 0s';
+  gameInterval = setInterval(()=>{gameTimer++;document.getElementById('game-timer').textContent=`Waktu: ${gameTimer}s`;},1000);
+}
+
+function renderGameGrid() {
+  const c = document.getElementById('game-content');
+  c.innerHTML=`<div class="grid grid-cols-4 gap-3 max-w-md mx-auto">${gameTiles.map((t,i)=>`<div class="game-tile ${t.type==='romaji'?'game-romaji-tile':''}" data-idx="${i}" onclick="selectTile(${i})">${t.val}</div>`).join('')}</div>`;
+}
+
+function selectTile(idx) {
+  const tile = gameTiles[idx];
+  if(tile.matched) return;
+  const el = document.querySelectorAll('.game-tile')[idx];
+  
+  if(!gameSelected) {
+    gameSelected = idx;
+    el.style.borderColor = 'var(--sakura)';
+    el.style.background = 'rgba(255,183,197,0.1)';
+  } else {
+    if(gameSelected === idx) { gameSelected=null; el.style.borderColor='var(--border)'; el.style.background='var(--card)'; return; }
+    const prevTile = gameTiles[gameSelected];
+    const prevEl = document.querySelectorAll('.game-tile')[gameSelected];
+    
+    if(prevTile.rom === tile.rom && prevTile.type !== tile.type) {
+      // Match!
+      tile.matched=true; prevTile.matched=true; gameMatches++;
+      el.classList.add('matched'); prevEl.classList.add('matched');
+      setExpression('happy');
+      addXP(5);
+      
+      if(gameMatches === gameTiles.length/2) {
+        clearInterval(gameInterval);
+        setTimeout(()=>{
+          document.getElementById('game-content').innerHTML=`<div class="text-center py-12"><p class="text-3xl font-black text-[var(--gold)] mb-2">${gameTimer}s</p><p class="text-lg font-bold mb-1">Semua Cocok!</p><p class="text-sm text-[var(--muted)] mb-6">すごい! Cepat sekali!</p><button class="px-6 py-2.5 rounded-lg bg-[var(--accent)] text-white font-bold cursor-pointer border-none text-sm hover:bg-[#c1121f] transition" onclick="startGame()">Main Lagi</button></div>`;
+          stats.quiz++; updateStats(); addXP(30);
+        },500);
+      }
+    } else {
+      // Wrong match
+      el.classList.add('wrong-match'); prevEl.classList.add('wrong-match');
+      setExpression('sad');
+      setTimeout(()=>{el.classList.remove('wrong-match');el.style.borderColor='var(--border)';el.style.background='var(--card)';prevEl.classList.remove('wrong-match');prevEl.style.borderColor='var(--border)';prevEl.style.background='var(--card)';},500);
+    }
+    gameSelected=null;
+  }
+}
+
+// --- CHAT (OTOMATIS DARI APP_DATA) ---
+function initChatUI() {
+  // Greeting quick buttons dari chatResponses keys
+  const gc = document.getElementById('greeting-quick-btns');
+  const quickPrompts = ['Apa arti arigatou?', 'Ajari menyapa', 'Partikel は vs が', 'Kata kerja dasar', 'Cara menghitung'];
+  quickPrompts.forEach(q => {
+    const b = document.createElement('button'); b.className='quick-btn'; b.textContent=q; b.onclick=()=>sendQuick(q);
+    gc.appendChild(b);
+  });
+  // Quick actions di bawah
+  const qa = document.getElementById('quick-actions');
+  ['Apa artinya sumimasen?','Kalimat sehari-hari','Menyatakan suka','Kata terkait belajar'].forEach(q=>{
+    const b=document.createElement('button');b.className='quick-btn';b.textContent=q;b.onclick=()=>sendQuick(q);qa.appendChild(b);
+  });
+}
+
+function addChatMsg(text, isUser) {
+  const c=document.getElementById('chat-messages');const d=document.createElement('div');
+  d.className=`chat-msg ${isUser?'chat-user':'chat-bot'}`;d.textContent=text;c.appendChild(d);c.scrollTop=c.scrollHeight;
+}
+
+function getBotResp(input) {
+  const l=input.toLowerCase().trim();
+  for(const r of APP_DATA.chatResponses){if(r.keys.some(k=>l.includes(k)))return{text:r.response,expr:r.expr};}
+  const hasJP=/[\u3040-\u309f\u30a0-\u30ff\u4e00-\u9faf]/.test(input);
+  if(hasJP) return {text:'Aku melihat karakter Jepang di sana! Untuk sekarang aku bisa membantu kosakata dasar dan frasa umum. Coba tanyakan arti kata tertentu, atau coba mode Kana/Kosakata di menu atas!',expr:'thinking'};
+  const defs=['Hmm, aku belum paham pertanyaan itu. Coba tanyakan tentang salam, angka, kata kerja, atau partikel bahasa Jepang!','Wah, pertanyaan yang menantang! Coba tanyakan sesuatu yang lebih spesifik, seperti "apa arti arigatou?"','Aku masih belajar juga! Mau coba mode Kuis atau Flashcard untuk belajar lebih terstruktur?'];
+  return {text:defs[Math.floor(Math.random()*defs.length)],expr:'thinking'};
+}
+
+function sendMessage() {
+  const inp=document.getElementById('chat-input');const text=inp.value.trim();if(!text)return;inp.value='';
+  const ov=document.getElementById('greeting-overlay');
+  if(!ov.classList.contains('hidden')){ov.classList.add('hidden');document.getElementById('quick-actions').style.display='flex';}
+  if(!chatStarted){chatStarted=true;stats.streak=1;updateStats();}
+  addChatMsg(text,true);setExpression('thinking');
+  setTimeout(()=>{const r=getBotResp(text);addChatMsg(r.text,false);setExpression(r.expr);stats.words++;updateStats();addXP(5);},600+Math.random()*400);
+}
+
+function sendQuick(t){document.getElementById('chat-input').value=t;sendMessage();}
+
+
+/* ================================================================
+   [3] KARAKTER ANIME CANVAS
+   ================================================================ */
+
+const canvas=document.getElementById('char-canvas'),ctx=canvas.getContext('2d');
+let currentExpression='happy',blinkTimer=0,isBlinking=false,breathOffset=0,animFrame=0;
+
+function drawCharacter(){
+  const w=canvas.width,h=canvas.height,cx=w/2;
+  ctx.clearRect(0,0,w,h);animFrame++;breathOffset=Math.sin(animFrame*0.03)*3;
+  blinkTimer++;if(blinkTimer>180+Math.random()*120){isBlinking=true;blinkTimer=0;}if(isBlinking&&blinkTimer>8)isBlinking=false;
+  const by=60+breathOffset;
+  
+  // Rambut belakang
+  ctx.fillStyle='#1a0a10';ctx.beginPath();ctx.ellipse(cx,210+by,145,195,0,0,Math.PI*2);ctx.fill();
+  ctx.beginPath();ctx.moveTo(cx-140,175+by);ctx.quadraticCurveTo(cx-120,80+by,cx-20,100+by);ctx.quadraticCurveTo(cx,75+by,cx+20,100+by);ctx.quadraticCurveTo(cx+120,80+by,cx+140,175+by);ctx.lineTo(cx+155,250+by);ctx.quadraticCurveTo(cx+160,300+by,cx+130,360+by);ctx.lineTo(cx-130,360+by);ctx.quadraticCurveTo(cx-160,300+by,cx-155,250+by);ctx.closePath();ctx.fill();
+  
+  // Leher
+  ctx.fillStyle='#fce4d6';ctx.fillRect(cx-22,330+by,44,45);
+  
+  // Baju
+  const grad=ctx.createLinearGradient(cx,365+by,cx,520+by);grad.addColorStop(0,'#1a1a3e');grad.addColorStop(1,'#12122a');
+  ctx.fillStyle=grad;ctx.beginPath();ctx.moveTo(cx-100,375+by);ctx.lineTo(cx-75,370+by);ctx.lineTo(cx,410+by);ctx.lineTo(cx+75,370+by);ctx.lineTo(cx+100,375+by);ctx.lineTo(cx+95,520+by);ctx.lineTo(cx-95,520+by);ctx.closePath();ctx.fill();
+  
+  // Kerah
+  ctx.fillStyle='#e63946';ctx.beginPath();ctx.moveTo(cx-72,372+by);ctx.lineTo(cx,408+by);ctx.lineTo(cx+72,372+by);ctx.lineTo(cx+55,385+by);ctx.lineTo(cx,405+by);ctx.lineTo(cx-55,385+by);ctx.closePath();ctx.fill();
+  ctx.strokeStyle='#fff';ctx.lineWidth=3;ctx.beginPath();ctx.moveTo(cx-65,382+by);ctx.lineTo(cx,407+by);ctx.lineTo(cx+65,382+by);ctx.stroke();
+  
+  // Dasi
+  ctx.fillStyle='#e63946';ctx.beginPath();ctx.moveTo(cx-8,395+by);ctx.lineTo(cx+8,395+by);ctx.lineTo(cx+18,415+by);ctx.lineTo(cx,425+by);ctx.lineTo(cx-18,415+by);ctx.closePath();ctx.fill();
+  ctx.beginPath();ctx.moveTo(cx-6,420+by);ctx.lineTo(cx-16,460+by);ctx.lineTo(cx-2,445+by);ctx.closePath();ctx.fill();
+  ctx.beginPath();ctx.moveTo(cx+6,420+by);ctx.lineTo(cx+16,460+by);ctx.lineTo(cx+2,445+by);ctx.closePath();ctx.fill();
+  
+  // Wajah
+  const fy=220+by;ctx.fillStyle='#fce4d6';ctx.beginPath();ctx.ellipse(cx,fy,88,102,0,0,Math.PI*2);ctx.fill();
+  ctx.fillStyle='rgba(255,150,170,0.25)';ctx.beginPath();ctx.ellipse(cx-60,fy+30,22,14,-0.1,0,Math.PI*2);ctx.fill();
+  ctx.beginPath();ctx.ellipse(cx+60,fy+30,22,14,0.1,0,Math.PI*2);ctx.fill();
+  
+  // Mata
+  const ey=fy-5,es=36;
+  if(currentExpression==='happy'){
+    ctx.strokeStyle='#2d1b0e';ctx.lineWidth=3.5;ctx.lineCap='round';
+    ctx.beginPath();ctx.arc(cx-es,ey,14,Math.PI+0.3,-0.3);ctx.stroke();
+    ctx.beginPath();ctx.arc(cx+es,ey,14,Math.PI+0.3,-0.3);ctx.stroke();
+    ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(cx-es-16,ey-4);ctx.lineTo(cx-es-12,ey-12);ctx.stroke();
+    ctx.beginPath();ctx.moveTo(cx+es+16,ey-4);ctx.lineTo(cx+es+12,ey-12);ctx.stroke();
+  } else if(isBlinking){
+    ctx.strokeStyle='#2d1b0e';ctx.lineWidth=3;ctx.lineCap='round';
+    ctx.beginPath();ctx.moveTo(cx-es-14,ey);ctx.lineTo(cx-es+14,ey);ctx.stroke();
+    ctx.beginPath();ctx.moveTo(cx+es-14,ey);ctx.lineTo(cx+es+14,ey);ctx.stroke();
+  } else {
+    let eW=24,eH=32;if(currentExpression==='surprised'){eW=28;eH=36;}if(currentExpression==='sad'){eH=26;}
+    [-1,1].forEach(s=>{const ex=cx+s*es;
+      ctx.fillStyle='#fff';ctx.beginPath();ctx.ellipse(ex,ey,eW,eH,0,0,Math.PI*2);ctx.fill();
+      const iR=currentExpression==='surprised'?16:14;
+      const iG=ctx.createRadialGradient(ex,ey+2,2,ex,ey+2,iR);iG.addColorStop(0,'#ff6b6b');iG.addColorStop(0.5,'#e63946');iG.addColorStop(1,'#8b0000');
+      ctx.fillStyle=iG;ctx.beginPath();ctx.ellipse(ex,ey+2,iR,iR,0,0,Math.PI*2);ctx.fill();
+      ctx.fillStyle='#0a0a0a';ctx.beginPath();ctx.ellipse(ex,ey+3,6,7,0,0,Math.PI*2);ctx.fill();
+      ctx.fillStyle='rgba(255,255,255,0.9)';ctx.beginPath();ctx.ellipse(ex+5,ey-5,5,5,0,0,Math.PI*2);ctx.fill();
+      ctx.fillStyle='rgba(255,255,255,0.5)';ctx.beginPath();ctx.ellipse(ex-4,ey+5,3,3,0,0,Math.PI*2);ctx.fill();
+      ctx.strokeStyle='#2d1b0e';ctx.lineWidth=2.5;ctx.lineCap='round';ctx.beginPath();ctx.ellipse(ex,ey-eH+4,eW+2,8,0,Math.PI+0.3,-0.3);ctx.stroke();
+    });
+    ctx.strokeStyle='#3d2b1e';ctx.lineWidth=2.5;ctx.lineCap='round';
+    if(currentExpression==='surprised'){ctx.beginPath();ctx.moveTo(cx-es-18,ey-38);ctx.lineTo(cx-es+12,ey-42);ctx.stroke();ctx.beginPath();ctx.moveTo(cx+es+18,ey-38);ctx.lineTo(cx+es-12,ey-42);ctx.stroke();}
+    else if(currentExpression==='sad'){ctx.beginPath();ctx.moveTo(cx-es-14,ey-38);ctx.lineTo(cx-es+14,ey-32);ctx.stroke();ctx.beginPath();ctx.moveTo(cx+es+14,ey-38);ctx.lineTo(cx+es-14,ey-32);ctx.stroke();}
+    else{ctx.beginPath();ctx.moveTo(cx-es-14,ey-36);ctx.lineTo(cx-es+14,ey-34);ctx.stroke();ctx.beginPath();ctx.moveTo(cx+es+14,ey-36);ctx.lineTo(cx+es-14,ey-34);ctx.stroke();}
+  }
+  
+  // Hidung
+  ctx.strokeStyle='#e0b8a0';ctx.lineWidth=1.5;ctx.beginPath();ctx.moveTo(cx,fy+14);ctx.lineTo(cx-3,fy+22);ctx.stroke();
+  
+  // Mulut
+  const my=fy+40;ctx.lineCap='round';
+  if(currentExpression==='happy'){ctx.strokeStyle='#c47070';ctx.lineWidth=2.5;ctx.beginPath();ctx.arc(cx,my-5,16,0.2,Math.PI-0.2);ctx.stroke();ctx.fillStyle='rgba(200,100,100,0.15)';ctx.beginPath();ctx.arc(cx,my-5,14,0.3,Math.PI-0.3);ctx.closePath();ctx.fill();}
+  else if(currentExpression==='surprised'){ctx.fillStyle='#c47070';ctx.beginPath();ctx.ellipse(cx,my+2,10,14,0,0,Math.PI*2);ctx.fill();ctx.fillStyle='#8b4040';ctx.beginPath();ctx.ellipse(cx,my+2,6,9,0,0,Math.PI*2);ctx.fill();}
+  else if(currentExpression==='sad'){ctx.strokeStyle='#c47070';ctx.lineWidth=2.5;ctx.beginPath();ctx.arc(cx,my+15,14,Math.PI+0.4,-0.4);ctx.stroke();}
+  else{ctx.strokeStyle='#c47070';ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(cx-10,my+2);ctx.quadraticCurveTo(cx+2,my+6,cx+12,my);ctx.stroke();}
+  
+  // Poni
+  ctx.fillStyle='#2d0a14';
+  ctx.beginPath();ctx.moveTo(cx-95,155+by);ctx.quadraticCurveTo(cx-80,110+by,cx-45,120+by);ctx.quadraticCurveTo(cx-30,125+by,cx-20,155+by);ctx.lineTo(cx-30,180+by);ctx.quadraticCurveTo(cx-60,170+by,cx-95,155+by);ctx.closePath();ctx.fill();
+  ctx.beginPath();ctx.moveTo(cx-50,120+by);ctx.quadraticCurveTo(cx-30,95+by,cx-5,105+by);ctx.quadraticCurveTo(cx,130+by,cx-10,165+by);ctx.lineTo(cx-25,160+by);ctx.quadraticCurveTo(cx-20,130+by,cx-50,120+by);ctx.closePath();ctx.fill();
+  ctx.beginPath();ctx.moveTo(cx-10,105+by);ctx.quadraticCurveTo(cx+5,85+by,cx+15,100+by);ctx.quadraticCurveTo(cx+10,135+by,cx+5,170+by);ctx.lineTo(cx-5,170+by);ctx.quadraticCurveTo(cx-3,130+by,cx-10,105+by);ctx.closePath();ctx.fill();
+  ctx.beginPath();ctx.moveTo(cx+15,100+by);ctx.quadraticCurveTo(cx+35,88+by,cx+50,110+by);ctx.quadraticCurveTo(cx+45,140+by,cx+30,170+by);ctx.lineTo(cx+18,165+by);ctx.quadraticCurveTo(cx+30,130+by,cx+15,100+by);ctx.closePath();ctx.fill();
+  ctx.beginPath();ctx.moveTo(cx+50,110+by);ctx.quadraticCurveTo(cx+80,100+by,cx+95,155+by);ctx.quadraticCurveTo(cx+70,165+by,cx+40,175+by);ctx.lineTo(cx+35,155+by);ctx.quadraticCurveTo(cx+60,140+by,cx+50,110+by);ctx.closePath();ctx.fill();
+  
+  // Rambut samping
+  ctx.beginPath();ctx.moveTo(cx-92,180+by);ctx.quadraticCurveTo(cx-115,260+by,cx-105,380+by);ctx.quadraticCurveTo(cx-100,410+by,cx-85,400+by);ctx.quadraticCurveTo(cx-95,280+by,cx-80,200+by);ctx.closePath();ctx.fill();
+  ctx.beginPath();ctx.moveTo(cx+92,180+by);ctx.quadraticCurveTo(cx+115,260+by,cx+105,380+by);ctx.quadraticCurveTo(cx+100,410+by,cx+85,400+by);ctx.quadraticCurveTo(cx+95,280+by,cx+80,200+by);ctx.closePath();ctx.fill();
+  
+  // Aksesoris
+  ctx.fillStyle='#e63946';ctx.beginPath();ctx.ellipse(cx+60,135+by,12,10,0.3,0,Math.PI*2);ctx.fill();
+  ctx.fillStyle='#ff8a95';ctx.beginPath();ctx.ellipse(cx+58,133+by,5,4,0.3,0,Math.PI*2);ctx.fill();
+  ctx.strokeStyle='#e63946';ctx.lineWidth=4;ctx.beginPath();ctx.arc(cx,135+by,80,Math.PI+0.6,-0.6);ctx.stroke();
+  ctx.fillStyle='#ffb7c5';for(let i=0;i<5;i++){const a=(i/5)*Math.PI*2;ctx.beginPath();ctx.ellipse(cx-75+Math.cos(a)*6,170+by+Math.sin(a)*6,4,3,a,0,Math.PI*2);ctx.fill();}
+  ctx.fillStyle='#ffd166';ctx.beginPath();ctx.arc(cx-75,170+by,3,0,Math.PI*2);ctx.fill();
+  
+  requestAnimationFrame(drawCharacter);
+}
+
+// --- KELOPAK SAKURA ---
+function createPetals(){const c=document.getElementById('petals-container');for(let i=0;i<12;i++){const p=document.createElement('div');p.className='sakura-petal';const s=8+Math.random()*10;p.style.cssText=`left:${Math.random()*100}vw;width:${s}px;height:${s*0.7}px;background:radial-gradient(ellipse at 30% 30%,#ffcfd8,#ffb0c0);border-radius:50% 0 50% 50%;animation-duration:${8+Math.random()*12}s;animation-delay:${Math.random()*10}s;`;c.appendChild(p);}}
+
+// --- INIT ---
+function init(){
+  createPetals();drawCharacter();
+  renderKanaTabs();renderKanaGrid();
+  renderVocabCategories();renderVocabGrid();
+  renderGrammar();renderPhrases();
+  renderFlashcardCategories();renderFlashcard();
+  initChatUI();updateStats();
+  
+  const today=new Date().toDateString(),last=localStorage.getItem('sakura-lv');
+  if(last!==today){if(last){const d=Math.floor((new Date(today)-new Date(last))/(1000*60*60*24));if(d===1)stats.streak=(parseInt(localStorage.getItem('sakura-st')||'0'))+1;}else stats.streak=1;localStorage.setItem('sakura-lv',today);localStorage.setItem('sakura-st',stats.streak);updateStats();}
+  else{stats.streak=parseInt(localStorage.getItem('sakura-st')||'1');updateStats();}
+}
+init();
+</script>
+</body>
+</html>
