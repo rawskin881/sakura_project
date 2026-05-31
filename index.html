@@ -854,16 +854,60 @@ function getBotResp(input) {
   return {text:defs[Math.floor(Math.random()*defs.length)],expr:'thinking'};
 }
 
-function sendMessage() {
-  const inp=document.getElementById('chat-input');const text=inp.value.trim();if(!text)return;inp.value='';
-  const ov=document.getElementById('greeting-overlay');
-  if(!ov.classList.contains('hidden')){ov.classList.add('hidden');document.getElementById('quick-actions').style.display='flex';}
-  if(!chatStarted){chatStarted=true;stats.streak=1;updateStats();}
-  addChatMsg(text,true);setExpression('thinking');
-  setTimeout(()=>{const r=getBotResp(text);addChatMsg(r.text,false);setExpression(r.expr);stats.words++;updateStats();addXP(5);},600+Math.random()*400);
+// GANTI fungsi sendMessage dan getBotResp:
+
+async function sendMessage() {
+  const inp = document.getElementById('chat-input');
+  const text = inp.value.trim();
+  if (!text) return;
+  
+  inp.value = '';
+  
+  // Hide greeting
+  const ov = document.getElementById('greeting-overlay');
+  if (!ov.classList.contains('hidden')) {
+    ov.classList.add('hidden');
+    document.getElementById('quick-actions').style.display = 'flex';
+  }
+  
+  // Add user message
+  addChatMsg(text, true);
+  setExpression('thinking');
+  
+  // Process with new engine
+  const response = await chatEngine.process(text);
+  
+  // Add bot response
+  setTimeout(() => {
+    addChatMsg(response.text, false);
+    setExpression(response.expr);
+    
+    // Update quick actions
+    updateQuickActions(response.quickReplies);
+    
+    // Auto-speak jika ada action
+    if (response.action?.type === 'speak') {
+      speak(response.action.text);
+    }
+    
+    // Update stats
+    stats.words++;
+    updateStats();
+    addXP(5);
+  }, 400 + Math.random() * 300);
 }
 
-function sendQuick(t){document.getElementById('chat-input').value=t;sendMessage();}
+function updateQuickActions(replies) {
+  const qa = document.getElementById('quick-actions');
+  qa.innerHTML = '';
+  replies.forEach(q => {
+    const b = document.createElement('button');
+    b.className = 'quick-btn';
+    b.textContent = q;
+    b.onclick = () => sendQuick(q);
+    qa.appendChild(b);
+  });
+}
 
 
 /* ================================================================
